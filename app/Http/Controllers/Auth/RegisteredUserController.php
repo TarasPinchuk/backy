@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Requests\RegisterRequest;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -37,10 +38,10 @@ class RegisteredUserController extends Controller
      *             @OA\Property(property="token_type", type="string", example="Bearer")
      *         )
      *     ),
-     *     @OA\Response(response=422, description="Ошибка валидации")
+     *     @OA\Response(response=401, description="Ошибка валидации")
      * )
      */
-    public function store(Request $request): JsonResponse
+    public function store(RegisterRequest $request): JsonResponse
     {
         $request->validate([
             'username' => ['required', 'string', 'max:255', 'unique:users,username'],
