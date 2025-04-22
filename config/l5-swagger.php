@@ -2,11 +2,6 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Default Documentation
-    |--------------------------------------------------------------------------
-    */
     'default' => 'default',
 
     'documentations' => [
@@ -17,29 +12,21 @@ return [
             ],
 
             'routes' => [
-                // Swagger UI endpoint
                 'api'             => 'api/documentation',
-                // JSON spec endpoint (Swagger UI will fetch from here)
                 'docs'            => 'api/documentation.json',
-                // OAuth2 callback (unused unless you add OAuth flows)
                 'oauth2_callback' => 'api/oauth2-callback',
             ],
 
             'paths' => [
-                // Directory with your annotation PHP files
-                'annotations'            => [
-                    base_path('app'),
-                ],
-                // Generated JSON filename (inside storage/api-docs)
+                'annotations'            => [ base_path('app') ],
                 'docs_json'              => 'api-docs.json',
-                // Generated YAML filename
                 'docs_yaml'              => 'api-docs.yaml',
-                // Which format UI should load by default
                 'format_to_use_for_docs' => env('L5_FORMAT_TO_USE_FOR_DOCS', 'json'),
-                // Serve assets with absolute URLs
-                'use_absolute_path'      => env('L5_SWAGGER_USE_ABSOLUTE_PATH', true),
-                // Path to swagger-ui assets
-                'swagger_ui_assets_path' => env('L5_SWAGGER_UI_ASSETS_PATH', 'vendor/swagger-api/swagger-ui/dist/'),
+                'use_absolute_path'      => true,
+                'swagger_ui_assets_path' => env(
+                    'L5_SWAGGER_UI_ASSETS_PATH',
+                    'vendor/swagger-api/swagger-ui/dist/'
+                ),
             ],
         ],
 
@@ -50,19 +37,14 @@ return [
         'routes' => [
             'docs'            => 'docs',
             'oauth2_callback' => 'api/oauth2-callback',
-            'middleware'      => [
-                'api'             => [],
-                'asset'           => [],
-                'docs'            => [],
-                'oauth2_callback' => [],
-            ],
-            'group_options' => [],
+            'middleware'      => ['api' => [], 'asset' => [], 'docs' => [], 'oauth2_callback' => []],
+            'group_options'   => [],
         ],
 
         'paths' => [
             'docs'     => storage_path('api-docs'),
             'views'    => base_path('resources/views/vendor/l5-swagger'),
-            'base'     => env('L5_SWAGGER_BASE_PATH', null),
+            'base'     => env('L5_SWAGGER_BASE_PATH', '/api'),
             'excludes' => [],
         ],
 
@@ -88,21 +70,15 @@ return [
                     'description'  => 'Введите токен в формате: Bearer {token}',
                 ],
             ],
-            'security' => [
-                ['sanctum' => []],
-            ],
+            'security' => [['sanctum' => []]],
         ],
 
-        'generate_always'     => env('L5_SWAGGER_GENERATE_ALWAYS', true),
-        'generate_yaml_copy'  => env('L5_SWAGGER_GENERATE_YAML_COPY', false),
-
-        'proxy'                => false,
+        'generate_always'    => env('L5_SWAGGER_GENERATE_ALWAYS', true),
+        'generate_yaml_copy' => env('L5_SWAGGER_GENERATE_YAML_COPY', false),
+        'proxy'              => false,
         'additional_config_url' => null,
-
-        // Чтобы SwaggerController не падал
-        'operations_sort'      => env('L5_SWAGGER_OPERATIONS_SORT', null),
-
-        'validator_url'        => null,
+        'operations_sort'    => env('L5_SWAGGER_OPERATIONS_SORT', null),
+        'validator_url'      => null,
 
         'ui' => [
             'display' => [
@@ -112,9 +88,7 @@ return [
             ],
             'authorization' => [
                 'persist_authorization' => env('L5_SWAGGER_UI_PERSIST_AUTHORIZATION', false),
-                'oauth2'                => [
-                    'use_pkce_with_authorization_code_grant' => false,
-                ],
+                'oauth2'                => ['use_pkce_with_authorization_code_grant' => false],
             ],
         ],
 
