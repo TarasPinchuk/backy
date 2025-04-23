@@ -57,7 +57,6 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        // Валидация входящих данных
         $request->validate([
             'username'              => ['required', 'string', 'max:255', 'unique:users,username'],
             'email'                 => ['required', 'string', 'email', 'max:255', 'unique:users,email'],

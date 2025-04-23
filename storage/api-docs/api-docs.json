@@ -155,6 +155,97 @@
                 ]
             }
         },
+        "/api/company/register": {
+            "post": {
+                "tags": [
+                    "Company"
+                ],
+                "summary": "Регистрация новой компании",
+                "operationId": "c85000d169d212d3ab3c4b7611465191",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "MyCompany"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "company@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Успешная регистрация компании",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "company": {
+                                            "type": "object"
+                                        },
+                                        "access_token": {
+                                            "type": "string",
+                                            "example": "Bearer token..."
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/company/me": {
+            "get": {
+                "tags": [
+                    "Company"
+                ],
+                "summary": "Получить текущую компанию",
+                "operationId": "d12df576e39053f3f62663dce3472e85",
+                "responses": {
+                    "200": {
+                        "description": "Профиль текущей компании",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/register": {
             "post": {
                 "tags": [
@@ -254,6 +345,141 @@
                     }
                 }
             }
+        },
+        "/api/bonus/create": {
+            "post": {
+                "tags": [
+                    "Bonus"
+                ],
+                "summary": "Создание бонуса компанией",
+                "operationId": "7f848eb41d27b165cec1832b43abe02c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Скидка 10%"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Бонус создан",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/company/bonuses": {
+            "get": {
+                "tags": [
+                    "Bonus"
+                ],
+                "summary": "Бонусы текущей компании",
+                "operationId": "b8f89e597f07816f06d5779fafb471c3",
+                "responses": {
+                    "200": {
+                        "description": "Список бонусов компании",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/bonuses": {
+            "get": {
+                "tags": [
+                    "Bonus"
+                ],
+                "summary": "Бонусы текущего пользователя",
+                "operationId": "ed5a2ff5b2d64aabe887bd5358334cde",
+                "responses": {
+                    "200": {
+                        "description": "Список бонусов пользователя",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/bonuses": {
+            "get": {
+                "tags": [
+                    "Bonus"
+                ],
+                "summary": "Список всех бонусов (только для админов)",
+                "operationId": "6cd57aa12f549196c337f8d6a597c475",
+                "responses": {
+                    "200": {
+                        "description": "Все бонусы",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Доступ запрещен"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
         }
     },
     "components": {
@@ -305,6 +531,14 @@
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "Company",
+            "description": "Company"
+        },
+        {
+            "name": "Bonus",
+            "description": "Bonus"
         }
     ],
     "security": [
