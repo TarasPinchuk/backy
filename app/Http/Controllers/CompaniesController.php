@@ -44,19 +44,23 @@ class CompaniesController extends Controller
             return response()->json(['error'=>'Не удалось прочитать CSV'], 400);
         }
 
-        $companyId = Auth::id();
+        $companyId = Auth::guard('company')->id();
         $count = 0;
+
         foreach ($records as $i => $row) {
             $level = $i < 50
               ? 'максимальный'
               : ($i < 100 ? 'средний' : 'минимальный');
+
             VolunteerRecipient::create([
                 'company_id'   => $companyId,
                 'full_name'    => $row['full_name'],
                 'inn'          => $row['inn'],
                 'phone'        => $row['phone'] ?? null,
                 'email'        => $row['email'] ?? null,
-                'birth_date'   => $row['birth_date'] ? \Carbon\Carbon::createFromFormat('d.m.Y',$row['birth_date']) : null,
+                'birth_date'   => $row['birth_date']
+                                   ? \Carbon\Carbon::createFromFormat('d.m.Y', $row['birth_date'])
+                                   : null,
                 'achievements' => $row['achievements'] ?? null,
                 'access_level' => $level,
             ]);
@@ -64,9 +68,9 @@ class CompaniesController extends Controller
         }
 
         return response()->json([
-            'company_id' => $companyId,
-            'uploaded_volunteers_count' => $count,
-        ]);
+            'company_id'                 => $companyId,
+            'uploaded_volunteers_count'  => $count,
+        ], 200);
     }
 
     /**
@@ -75,13 +79,29 @@ class CompaniesController extends Controller
      *   summary="Список волонтёров компании",
      *   tags={"Company"},
      *   security={{"sanctum":{}}},
-     *   @OA\Response(response=200, description="Список волонтёров")
+     *   @OA\Response(
+     *     response=200,
+     *     description="Список волонтёров",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(
+     *         property="volunteers",
+     *         type="array",
+     *         @OA\Items(ref="#/components/schemas/VolunteerRecipient")
+     *       )
+     *     )
+     *   )
      * )
      */
     public function volunteers()
     {
-        $companyId = Auth::id();
-        $vols = VolunteerRecipient::with('claims.bonus')->where('company_id',$companyId)->get();
-        return response()->json($vols);
+        $companyId = Auth::guard('company')->id();
+        $vols = VolunteerRecipient::with('claims.bonus')
+            ->where('company_id', $companyId)
+            ->get();
+
+        return response()->json([
+            'volunteers' => $vols,
+        ], 200);
     }
 }

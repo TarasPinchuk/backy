@@ -9,31 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use OpenApi\Annotations as OA;
 
-/**
- * @OA\Schema(
- *     schema="Bonus",
- *     type="object",
- *     required={"id","name","level","company_id","is_used","created_at","updated_at"},
- *     @OA\Property(property="id",         type="integer", format="int64", example=1),
- *     @OA\Property(property="name",       type="string",               example="Скидка 10%"),
- *     @OA\Property(property="level",      type="string",               example="max"),
- *     @OA\Property(property="company_id", type="integer", format="int64", example=3),
- *     @OA\Property(property="user_id",    type="integer", format="int64", nullable=true, example=null),
- *     @OA\Property(property="is_used",    type="boolean",              example=false),
- *     @OA\Property(property="created_at", type="string",  format="date-time", example="2025-04-23T15:47:55.000000Z"),
- *     @OA\Property(property="updated_at", type="string",  format="date-time", example="2025-04-23T15:47:55.000000Z")
- * )
- *
- * @OA\Schema(
- *     schema="BonusClaim",
- *     type="object",
- *     required={"id","bonus_id","volunteer_recipient_id","claimed_at"},
- *     @OA\Property(property="id",                     type="integer", format="int64", example=1),
- *     @OA\Property(property="bonus_id",               type="integer", format="int64", example=2),
- *     @OA\Property(property="volunteer_recipient_id", type="integer", format="int64", example=15),
- *     @OA\Property(property="claimed_at",             type="string",  format="date-time", example="2025-04-23T20:47:55.000000Z")
- * )
- */
 class BonusController extends Controller
 {
     /**
@@ -85,6 +60,7 @@ class BonusController extends Controller
      *         response=200,
      *         description="Список бонусов компании",
      *         @OA\JsonContent(
+     *             type="object",
      *             @OA\Property(
      *                 property="bonuses",
      *                 type="array",
@@ -97,7 +73,10 @@ class BonusController extends Controller
     public function companyBonuses()
     {
         $bonuses = Bonus::where('company_id', Auth::guard('company')->id())->get();
-        return response()->json(['bonuses' => $bonuses], 200);
+
+        return response()->json([
+            'bonuses' => $bonuses,
+        ], 200);
     }
 
     /**
@@ -111,8 +90,12 @@ class BonusController extends Controller
      *         response=200,
      *         description="Список бонусов пользователя",
      *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(ref="#/components/schemas/Bonus")
+     *             type="object",
+     *             @OA\Property(
+     *                 property="user",
+     *                 type="array",
+     *                 @OA\Items(ref="#/components/schemas/Bonus")
+     *             )
      *         )
      *     )
      * )
@@ -123,7 +106,9 @@ class BonusController extends Controller
 
         $volunteer = VolunteerRecipient::where('user_id', $user->id)->first();
         if (! $volunteer) {
-            return response()->json([], 200);
+            return response()->json([
+                'user' => [],
+            ], 200);
         }
 
         $bonuses = BonusClaim::with('bonus')
@@ -131,7 +116,9 @@ class BonusController extends Controller
             ->get()
             ->pluck('bonus');
 
-        return response()->json($bonuses, 200);
+        return response()->json([
+            'user' => $bonuses,
+        ], 200);
     }
 
     /**
@@ -150,6 +137,7 @@ class BonusController extends Controller
         if (! Auth::user() || ! Auth::user()->is_admin) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
+
         return response()->json(Bonus::all(), 200);
     }
 
