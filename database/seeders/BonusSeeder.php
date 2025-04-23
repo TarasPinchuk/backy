@@ -17,7 +17,7 @@ class BonusSeeder extends Seeder
                 'company_id' => $company->id,
                 'name'       => 'Сертификат благодарности',
                 'level'      => 'min',
-                'is_used'    => false,
+                'is_used'    => true,
             ]);
 
             // Средний бонус
@@ -33,7 +33,7 @@ class BonusSeeder extends Seeder
                 'company_id' => $company->id,
                 'name'       => 'Абонемент в спортивный зал',
                 'level'      => 'max',
-                'is_used'    => false,
+                'is_used'    => true,
             ]);
         }
     }

@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             CompanySeeder::class,
             UserSeeder::class,
             BonusSeeder::class,
+            BonusClaimSeeder::class
         ]);
     }
 }
