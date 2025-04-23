@@ -22,7 +22,7 @@ use Illuminate\Database\Eloquent\Model;
 class Bonus extends Model
 {
     protected $fillable = [
-        'company_id','name','description','level','is_used'
+        'company_id','name', 'level','is_used'
     ];
 
     public function company()
