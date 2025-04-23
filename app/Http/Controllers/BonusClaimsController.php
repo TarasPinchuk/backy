@@ -11,8 +11,6 @@ use OpenApi\Annotations as OA;
 class BonusClaimsController extends Controller
 {
     /**
-     * История всех выданных бонусов компанией
-     *
      * @OA\Get(
      *     path="/api/company/bonuses/history",
      *     operationId="getCompanyHistory",
@@ -26,7 +24,16 @@ class BonusClaimsController extends Controller
      *             @OA\Property(
      *                 property="bonuses",
      *                 type="array",
-     *                 @OA\Items(ref="#/components/schemas/BonusClaim")
+     *                 @OA\Items(
+     *                     allOf={
+     *                         @OA\Schema(ref="#/components/schemas/BonusClaim"),
+     *                         @OA\Schema(
+     *                             @OA\Property(property="bonus", ref="#/components/schemas/Bonus"),
+     *                             @OA\Property(property="company", ref="#/components/schemas/Company"),
+     *                             @OA\Property(property="volunteerRecipient", ref="#/components/schemas/VolunteerRecipient")
+     *                         )
+     *                     }
+     *                 )
      *             )
      *         )
      *     )
@@ -36,21 +43,17 @@ class BonusClaimsController extends Controller
     {
         $companyId = Auth::guard('company')->id();
 
-        $history = BonusClaim::with('bonus')
+        $history = BonusClaim::with(['bonus.company', 'volunteerRecipient'])
             ->whereHas('bonus', function ($q) use ($companyId) {
                 $q->where('company_id', $companyId);
             })
             ->get();
 
-        // Обёртка под ключом "bonuses"
-        return response()->json([
-            'bonuses' => $history,
-        ], 200);
+        // Отдаём как { "bonuses": [ ... ] }
+        return response()->json(['bonuses' => $history], 200);
     }
 
     /**
-     * История полученных бонусов пользователем
-     *
      * @OA\Get(
      *     path="/api/bonuses/history",
      *     operationId="getUserHistory",
@@ -78,17 +81,13 @@ class BonusClaimsController extends Controller
         $volunteer = VolunteerRecipient::where('user_id', $user->id)->first();
 
         if (! $volunteer) {
-            return response()->json([
-                'bonuses' => [],
-            ], 200);
+            return response()->json(['bonuses' => []], 200);
         }
 
         $history = BonusClaim::with('bonus')
             ->where('volunteer_recipient_id', $volunteer->id)
             ->get();
 
-        return response()->json([
-            'bonuses' => $history,
-        ], 200);
+        return response()->json(['bonuses' => $history], 200);
     }
 }

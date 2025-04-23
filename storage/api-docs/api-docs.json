@@ -421,7 +421,6 @@
                     "Bonus"
                 ],
                 "summary": "История всех выданных бонусов (компания)",
-                "description": "История всех выданных бонусов компанией",
                 "operationId": "getCompanyHistory",
                 "responses": {
                     "200": {
@@ -433,7 +432,25 @@
                                         "bonuses": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/BonusClaim"
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/BonusClaim"
+                                                    },
+                                                    {
+                                                        "properties": {
+                                                            "bonus": {
+                                                                "$ref": "#/components/schemas/Bonus"
+                                                            },
+                                                            "company": {
+                                                                "$ref": "#/components/schemas/Company"
+                                                            },
+                                                            "volunteerRecipient": {
+                                                                "$ref": "#/components/schemas/VolunteerRecipient"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                ]
                                             }
                                         }
                                     },
@@ -456,7 +473,6 @@
                     "Bonus"
                 ],
                 "summary": "История полученных бонусов (пользователь)",
-                "description": "История полученных бонусов пользователем",
                 "operationId": "getUserHistory",
                 "responses": {
                     "200": {
