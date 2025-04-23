@@ -201,11 +201,11 @@
                                 "schema": {
                                     "properties": {
                                         "company": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/Company"
                                         },
                                         "access_token": {
                                             "type": "string",
-                                            "example": "Bearer token..."
+                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGci..."
                                         },
                                         "token_type": {
                                             "type": "string",
@@ -216,6 +216,72 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации"
+                    }
+                }
+            }
+        },
+        "/api/company/login": {
+            "post": {
+                "tags": [
+                    "Company"
+                ],
+                "summary": "Авторизация компании",
+                "operationId": "080d96f5eb0af0e0041f32bef993816c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "company@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Успешный вход",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "company": {
+                                            "$ref": "#/components/schemas/Company"
+                                        },
+                                        "access_token": {
+                                            "type": "string",
+                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGci..."
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "Bearer"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Неверные учётные данные"
                     }
                 }
             }
@@ -233,10 +299,13 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object"
+                                    "$ref": "#/components/schemas/Company"
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     }
                 },
                 "security": [
@@ -346,13 +415,45 @@
                 }
             }
         },
-        "/api/bonus/create": {
+        "/api/company/bonuses": {
+            "get": {
+                "tags": [
+                    "Bonus"
+                ],
+                "summary": "Бонусы текущей компании",
+                "operationId": "b8f89e597f07816f06d5779fafb471c3",
+                "responses": {
+                    "200": {
+                        "description": "Список бонусов компании",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "bonuses": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Bonus"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Bonus"
                 ],
-                "summary": "Создание бонуса",
-                "operationId": "7f848eb41d27b165cec1832b43abe02c",
+                "summary": "Создание бонуса компанией",
+                "operationId": "946c005538649625617eee3bf6fce54b",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -374,69 +475,11 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Бонус создан"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/company/bonuses": {
-            "get": {
-                "tags": [
-                    "Bonus"
-                ],
-                "summary": "Бонусы текущей компании",
-                "operationId": "b8f89e597f07816f06d5779fafb471c3",
-                "responses": {
-                    "200": {
-                        "description": "Список бонусов компании",
+                        "description": "Бонус успешно создан",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer",
-                                                "format": "int64",
-                                                "example": 1
-                                            },
-                                            "name": {
-                                                "type": "string",
-                                                "example": "Скидка 10%"
-                                            },
-                                            "company_id": {
-                                                "type": "integer",
-                                                "format": "int64",
-                                                "example": 3
-                                            },
-                                            "user_id": {
-                                                "type": "integer",
-                                                "format": "int64",
-                                                "example": null,
-                                                "nullable": true
-                                            },
-                                            "is_used": {
-                                                "type": "boolean",
-                                                "example": false
-                                            },
-                                            "created_at": {
-                                                "type": "string",
-                                                "format": "date-time",
-                                                "example": "2025-04-23T15:47:55.000000Z"
-                                            },
-                                            "updated_at": {
-                                                "type": "string",
-                                                "format": "date-time",
-                                                "example": "2025-04-23T15:47:55.000000Z"
-                                            }
-                                        },
-                                        "type": "object"
-                                    }
+                                    "$ref": "#/components/schemas/Bonus"
                                 }
                             }
                         }
@@ -464,7 +507,7 @@
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "type": "object"
+                                        "$ref": "#/components/schemas/Bonus"
                                     }
                                 }
                             }
@@ -493,14 +536,14 @@
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "type": "object"
+                                        "$ref": "#/components/schemas/Bonus"
                                     }
                                 }
                             }
                         }
                     },
                     "403": {
-                        "description": "Доступ запрещен"
+                        "description": "Доступ запрещён"
                     }
                 },
                 "security": [
@@ -538,6 +581,87 @@
                     "confirmation_code": {
                         "type": "string",
                         "example": "12345"
+                    }
+                },
+                "type": "object"
+            },
+            "Bonus": {
+                "required": [
+                    "id",
+                    "name",
+                    "company_id",
+                    "is_used",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Скидка 10%"
+                    },
+                    "company_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 3
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "is_used": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-04-23T15:47:55.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-04-23T15:47:55.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "Company": {
+                "required": [
+                    "id",
+                    "name",
+                    "email"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "MyCompany"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "company@example.com"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-04-23T16:55:38.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-04-23T16:55:38.000000Z"
                     }
                 },
                 "type": "object"

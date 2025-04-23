@@ -2,26 +2,30 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisteredUserController;
-use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\CompanyAuthController;
+use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\BonusController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application.
+|
 */
 
-/** Users */
 Route::post('/register', [RegisteredUserController::class, 'store']);
-Route::post('/login',    [RegisteredUserController::class, 'login']);
+Route::post('/login',    [AuthenticatedSessionController::class, 'store']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user',            [UserController::class, 'profile']);
-    Route::get('/bonuses/user',    [BonusController::class, 'userBonuses']);
-    Route::get('/bonuses/all',     [BonusController::class, 'allBonuses']);
+    Route::get('/user',   [UserController::class, 'profile']);
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 
-    Route::post('/bonus/create',   [BonusController::class, 'create']);
+    Route::get('/bonuses/user', [BonusController::class, 'userBonuses']);
+
+    Route::get('/bonuses/all',  [BonusController::class, 'allBonuses']);
 });
 
 Route::prefix('company')->group(function () {
@@ -30,7 +34,9 @@ Route::prefix('company')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me',       [CompanyAuthController::class, 'me']);
+
         Route::post('/bonuses', [BonusController::class, 'create']);
+
         Route::get('/bonuses',  [BonusController::class, 'companyBonuses']);
     });
 });

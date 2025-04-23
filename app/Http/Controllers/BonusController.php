@@ -11,8 +11,8 @@ class BonusController extends Controller
 {
     /**
      * @OA\Post(
-     *     path="/api/bonus/create",
-     *     summary="Создание бонуса",
+     *     path="/api/company/bonuses",
+     *     summary="Создание бонуса компанией",
      *     tags={"Bonus"},
      *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
@@ -22,7 +22,11 @@ class BonusController extends Controller
      *             @OA\Property(property="name", type="string", example="Скидка 10%")
      *         )
      *     ),
-     *     @OA\Response(response=201, description="Бонус создан")
+     *     @OA\Response(
+     *         response=201,
+     *         description="Бонус успешно создан",
+     *         @OA\JsonContent(ref="#/components/schemas/Bonus")
+     *     )
      * )
      */
     public function create(Request $request)
@@ -31,22 +35,19 @@ class BonusController extends Controller
             'name' => 'required|string',
         ]);
 
-        $actor = $request->user();
+        $companyId = Auth::guard('company')->id();
 
         $bonus = Bonus::create([
             'name'       => $request->name,
-            'company_id' => method_exists($actor, 'createToken')
-                              ? $actor->id  
-                              : null,
-            'user_id'    => method_exists($actor, 'createToken')
-                              ? null      
-                              : $actor->id 
+            'company_id' => $companyId,
+            'user_id'    => null,
+            'is_used'    => false,
         ]);
 
         return response()->json($bonus, 201);
     }
 
-/**
+    /**
  * @OA\Get(
  *     path="/api/company/bonuses",
  *     summary="Бонусы текущей компании",
@@ -56,27 +57,36 @@ class BonusController extends Controller
  *         response=200,
  *         description="Список бонусов компании",
  *         @OA\JsonContent(
- *             type="array",
- *             @OA\Items(
- *                 type="object",
- *                 @OA\Property(property="id",          type="integer", format="int64",        example=1),
- *                 @OA\Property(property="name",        type="string",                        example="Скидка 10%"),
- *                 @OA\Property(property="company_id",  type="integer", format="int64",        example=3),
- *                 @OA\Property(property="user_id",     type="integer", format="int64",        nullable=true, example=null),
- *                 @OA\Property(property="is_used",     type="boolean",                       example=false),
- *                 @OA\Property(property="created_at",  type="string",  format="date-time",  example="2025-04-23T15:47:55.000000Z"),
- *                 @OA\Property(property="updated_at",  type="string",  format="date-time",  example="2025-04-23T15:47:55.000000Z")
+ *             @OA\Property(
+ *                 property="bonuses",
+ *                 type="array",
+ *                 @OA\Items(ref="#/components/schemas/Bonus")
  *             )
  *         )
  *     )
+ * )
+ *
+ * @OA\Schema(
+ *     schema="Bonus",
+ *     type="object",
+ *     required={"id","name","company_id","is_used","created_at","updated_at"},
+ *     @OA\Property(property="id",           type="integer", format="int64",    example=1),
+ *     @OA\Property(property="name",         type="string",                  example="Скидка 10%"),
+ *     @OA\Property(property="company_id",   type="integer", format="int64",    example=3),
+ *     @OA\Property(property="user_id",      type="integer", format="int64",  nullable=true, example=null),
+ *     @OA\Property(property="is_used",      type="boolean",                 example=false),
+ *     @OA\Property(property="created_at",   type="string",  format="date-time", example="2025-04-23T15:47:55.000000Z"),
+ *     @OA\Property(property="updated_at",   type="string",  format="date-time", example="2025-04-23T15:47:55.000000Z")
  * )
  */
     public function companyBonuses()
     {
         $bonuses = Bonus::where('company_id', Auth::guard('company')->id())->get();
-        return response()->json($bonuses);
-    }
 
+        return response()->json([
+            'bonuses' => $bonuses,
+        ], 200);
+    }
 
     /**
      * @OA\Get(
@@ -87,14 +97,15 @@ class BonusController extends Controller
      *     @OA\Response(
      *         response=200,
      *         description="Список бонусов пользователя",
-     *         @OA\JsonContent(type="array", @OA\Items(type="object"))
+     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Bonus"))
      *     )
      * )
      */
     public function userBonuses()
     {
         $bonuses = Bonus::where('user_id', Auth::id())->get();
-        return response()->json($bonuses);
+
+        return response()->json($bonuses, 200);
     }
 
     /**
@@ -106,11 +117,11 @@ class BonusController extends Controller
      *     @OA\Response(
      *         response=200,
      *         description="Все бонусы",
-     *         @OA\JsonContent(type="array", @OA\Items(type="object"))
+     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Bonus"))
      *     ),
      *     @OA\Response(
      *         response=403,
-     *         description="Доступ запрещен"
+     *         description="Доступ запрещён"
      *     )
      * )
      */
@@ -120,6 +131,6 @@ class BonusController extends Controller
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        return response()->json(Bonus::all());
+        return response()->json(Bonus::all(), 200);
     }
 }
