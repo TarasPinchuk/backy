@@ -17,14 +17,16 @@ class UserService
     public function getUserProfile(int $userId): ?UserDTO
     {
         $user = $this->userRepo->findById($userId);
+
         if (!$user) {
             return null;
         }
+
         return new UserDTO(
             $user->id,
             $user->username,
-            $user->email
+            $user->email,
+            $user->confirmation_code
         );
     }
-
 }

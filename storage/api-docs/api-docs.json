@@ -27,11 +27,37 @@
                 "operationId": "b02a7a2a0a8da8486e590a1be690f3cd",
                 "responses": {
                     "200": {
-                        "description": "Успешно, возвращает данные пользователя",
+                        "description": "Успешно, возвращает данные пользователя и его confirmation_code",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/UserDTO"
+                                    "required": [
+                                        "id",
+                                        "username",
+                                        "email",
+                                        "confirmation_code"
+                                    ],
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "format": "int64",
+                                            "example": 1
+                                        },
+                                        "username": {
+                                            "type": "string",
+                                            "example": "johndoe"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "format": "email",
+                                            "example": "johndoe@example.com"
+                                        },
+                                        "confirmation_code": {
+                                            "type": "string",
+                                            "example": "12345"
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -135,7 +161,7 @@
                     "Auth"
                 ],
                 "summary": "Регистрация нового пользователя",
-                "operationId": "18235ea6963e661c49bf381065779d6a",
+                "operationId": "registerUser",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -160,12 +186,12 @@
                                     "password": {
                                         "type": "string",
                                         "format": "password",
-                                        "example": "Password123"
+                                        "example": "Secret123"
                                     },
                                     "password_confirmation": {
                                         "type": "string",
                                         "format": "password",
-                                        "example": "Password123"
+                                        "example": "Secret123"
                                     }
                                 },
                                 "type": "object"
@@ -198,7 +224,33 @@
                         }
                     },
                     "401": {
-                        "description": "Ошибка валидации"
+                        "description": "Ошибка валидации данных",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ошибка валидации данных для регистрации"
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                },
+                                                "property": null
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Внутренняя ошибка сервера"
                     }
                 }
             }
@@ -207,12 +259,11 @@
     "components": {
         "schemas": {
             "UserDTO": {
-                "title": "User Data Transfer Object",
-                "description": "Данные пользователя",
                 "required": [
                     "id",
                     "username",
-                    "email"
+                    "email",
+                    "confirmation_code"
                 ],
                 "properties": {
                     "id": {
@@ -228,6 +279,10 @@
                         "type": "string",
                         "format": "email",
                         "example": "johndoe@example.com"
+                    },
+                    "confirmation_code": {
+                        "type": "string",
+                        "example": "12345"
                     }
                 },
                 "type": "object"
