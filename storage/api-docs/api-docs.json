@@ -415,13 +415,71 @@
                 }
             }
         },
+        "/api/company/bonuses/history": {
+            "get": {
+                "tags": [
+                    "Bonus"
+                ],
+                "summary": "История всех выданных бонусов (компания)",
+                "operationId": "getCompanyHistory",
+                "responses": {
+                    "200": {
+                        "description": "История выдачи бонусов компанией",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/BonusClaim"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/bonuses/history": {
+            "get": {
+                "tags": [
+                    "Bonus"
+                ],
+                "summary": "История полученных бонусов (пользователь)",
+                "operationId": "getUserHistory",
+                "responses": {
+                    "200": {
+                        "description": "История получения бонусов пользователем",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/BonusClaim"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/company/bonuses": {
             "get": {
                 "tags": [
                     "Bonus"
                 ],
                 "summary": "Бонусы текущей компании",
-                "operationId": "b8f89e597f07816f06d5779fafb471c3",
+                "operationId": "getCompanyBonuses",
                 "responses": {
                     "200": {
                         "description": "Список бонусов компании",
@@ -453,19 +511,29 @@
                     "Bonus"
                 ],
                 "summary": "Создание бонуса компанией",
-                "operationId": "946c005538649625617eee3bf6fce54b",
+                "operationId": "createBonus",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "name"
+                                    "name",
+                                    "level"
                                 ],
                                 "properties": {
                                     "name": {
                                         "type": "string",
                                         "example": "Скидка 10%"
+                                    },
+                                    "level": {
+                                        "type": "string",
+                                        "enum": [
+                                            "max",
+                                            "medium",
+                                            "min"
+                                        ],
+                                        "example": "max"
                                     }
                                 },
                                 "type": "object"
@@ -483,6 +551,15 @@
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Неправильные данные"
+                    },
+                    "401": {
+                        "description": "Не аутентифицирован"
+                    },
+                    "403": {
+                        "description": "Нет прав"
                     }
                 },
                 "security": [
@@ -498,7 +575,7 @@
                     "Bonus"
                 ],
                 "summary": "Бонусы текущего пользователя",
-                "operationId": "ed5a2ff5b2d64aabe887bd5358334cde",
+                "operationId": "getUserBonuses",
                 "responses": {
                     "200": {
                         "description": "Список бонусов пользователя",
@@ -527,7 +604,7 @@
                     "Bonus"
                 ],
                 "summary": "Список всех бонусов (только для админов)",
-                "operationId": "6cd57aa12f549196c337f8d6a597c475",
+                "operationId": "getAllBonuses",
                 "responses": {
                     "200": {
                         "description": "Все бонусы",
@@ -543,7 +620,107 @@
                         }
                     },
                     "403": {
-                        "description": "Доступ запрещён"
+                        "description": "Запрещено"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/bonuses/{bonus}/claim": {
+            "post": {
+                "tags": [
+                    "Bonus"
+                ],
+                "summary": "Взять бонус",
+                "operationId": "claimBonus",
+                "parameters": [
+                    {
+                        "name": "bonus",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Бонус взят",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BonusClaim"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Бонус уже был использован"
+                    },
+                    "403": {
+                        "description": "Нет прав на этот бонус"
+                    },
+                    "404": {
+                        "description": "Бонус не найден"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/company/volunteers/upload": {
+            "post": {
+                "tags": [
+                    "Company"
+                ],
+                "summary": "Загрузить CSV волонтёров",
+                "operationId": "117f990464539f2ee33783012e256083",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "CSV обработан"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/company/volunteers": {
+            "get": {
+                "tags": [
+                    "Company"
+                ],
+                "summary": "Список волонтёров компании",
+                "operationId": "ec29d816f9500d752eba4ed1a86677e2",
+                "responses": {
+                    "200": {
+                        "description": "Список волонтёров"
                     }
                 },
                 "security": [
@@ -589,6 +766,7 @@
                 "required": [
                     "id",
                     "name",
+                    "level",
                     "company_id",
                     "is_used",
                     "created_at",
@@ -603,6 +781,10 @@
                     "name": {
                         "type": "string",
                         "example": "Скидка 10%"
+                    },
+                    "level": {
+                        "type": "string",
+                        "example": "max"
                     },
                     "company_id": {
                         "type": "integer",
@@ -628,6 +810,37 @@
                         "type": "string",
                         "format": "date-time",
                         "example": "2025-04-23T15:47:55.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "BonusClaim": {
+                "required": [
+                    "id",
+                    "bonus_id",
+                    "volunteer_recipient_id",
+                    "claimed_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "bonus_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 2
+                    },
+                    "volunteer_recipient_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 15
+                    },
+                    "claimed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2025-04-23T20:47:55.000000Z"
                     }
                 },
                 "type": "object"
@@ -662,6 +875,40 @@
                         "type": "string",
                         "format": "date-time",
                         "example": "2025-04-23T16:55:38.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "VolunteerRecipient": {
+                "title": "VolunteerRecipient",
+                "required": [
+                    "id",
+                    "full_name",
+                    "inn",
+                    "email",
+                    "access_level"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 15
+                    },
+                    "full_name": {
+                        "type": "string",
+                        "example": "Иванов И. И."
+                    },
+                    "inn": {
+                        "type": "string",
+                        "example": "772456789012"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "volunteer@example.com"
+                    },
+                    "access_level": {
+                        "type": "string",
+                        "example": "max"
                     }
                 },
                 "type": "object"

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -19,15 +20,19 @@ use Illuminate\Notifications\Notifiable;
  */
 class Company extends Authenticatable
 {
-use HasApiTokens, Notifiable;
+    use HasApiTokens, Notifiable;
 
-protected $fillable = [
-'name',
-'email',
-'password',
-];
+    protected $fillable = ['name','email','password'];
+    protected $hidden   = ['password'];
+    
+    public function volunteers()
+    {
+        return $this->hasMany(VolunteerRecipient::class);
+    }
 
-protected $hidden = [
-'password',
-];
+    public function bonuses()
+    {
+        return $this->hasMany(Bonus::class);
+    }
 }
+

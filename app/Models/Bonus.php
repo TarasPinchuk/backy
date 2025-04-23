@@ -6,15 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Bonus extends Model
 {
-    protected $fillable = ['name', 'company_id', 'user_id', 'is_used'];
+    protected $fillable = [
+        'company_id','name','description','level','is_used'
+    ];
 
     public function company()
     {
         return $this->belongsTo(Company::class);
     }
 
-    public function user()
+    public function claim()
     {
-        return $this->belongsTo(User::class);
+        return $this->hasOne(BonusClaim::class);
     }
 }
