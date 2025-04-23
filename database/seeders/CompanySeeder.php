@@ -13,13 +13,13 @@ class CompanySeeder extends Seeder
         Company::create([
             'name'     => 'Благотворительный Фонд «Помощь»',
             'email'    => 'help_fund@example.com',
-            'password' => Hash::make('password'),
+            'password' => 'peresekin',
         ]);
 
         Company::create([
             'name'     => 'Центр Добрых Дел',
             'email'    => 'good_center@example.com',
-            'password' => Hash::make('password'),
+            'password' => 'chooprin',
         ]);
     }
 }
