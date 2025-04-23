@@ -60,7 +60,6 @@ class BonusController extends Controller
      *         response=200,
      *         description="Список бонусов компании",
      *         @OA\JsonContent(
-     *             type="object",
      *             @OA\Property(
      *                 property="bonuses",
      *                 type="array",
@@ -73,10 +72,7 @@ class BonusController extends Controller
     public function companyBonuses()
     {
         $bonuses = Bonus::where('company_id', Auth::guard('company')->id())->get();
-
-        return response()->json([
-            'bonuses' => $bonuses,
-        ], 200);
+        return response()->json(['bonuses' => $bonuses], 200);
     }
 
     /**
@@ -90,9 +86,8 @@ class BonusController extends Controller
      *         response=200,
      *         description="Список бонусов пользователя",
      *         @OA\JsonContent(
-     *             type="object",
      *             @OA\Property(
-     *                 property="user",
+     *                 property="bonuses",
      *                 type="array",
      *                 @OA\Items(ref="#/components/schemas/Bonus")
      *             )
@@ -106,9 +101,7 @@ class BonusController extends Controller
 
         $volunteer = VolunteerRecipient::where('user_id', $user->id)->first();
         if (! $volunteer) {
-            return response()->json([
-                'user' => [],
-            ], 200);
+            return response()->json(['bonuses' => []], 200);
         }
 
         $bonuses = BonusClaim::with('bonus')
@@ -116,9 +109,7 @@ class BonusController extends Controller
             ->get()
             ->pluck('bonus');
 
-        return response()->json([
-            'user' => $bonuses,
-        ], 200);
+        return response()->json(['bonuses' => $bonuses], 200);
     }
 
     /**
@@ -137,7 +128,6 @@ class BonusController extends Controller
         if (! Auth::user() || ! Auth::user()->is_admin) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
-
         return response()->json(Bonus::all(), 200);
     }
 

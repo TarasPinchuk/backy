@@ -595,7 +595,7 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "user": {
+                                        "bonuses": {
                                             "type": "array",
                                             "items": {
                                                 "$ref": "#/components/schemas/Bonus"
