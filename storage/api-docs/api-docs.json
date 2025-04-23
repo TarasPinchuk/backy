@@ -351,7 +351,7 @@
                 "tags": [
                     "Bonus"
                 ],
-                "summary": "Создание бонуса компанией",
+                "summary": "Создание бонуса",
                 "operationId": "7f848eb41d27b165cec1832b43abe02c",
                 "requestBody": {
                     "required": true,
@@ -374,14 +374,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Бонус создан",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Бонус создан"
                     }
                 },
                 "security": [
@@ -406,6 +399,42 @@
                                 "schema": {
                                     "type": "array",
                                     "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "format": "int64",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Скидка 10%"
+                                            },
+                                            "company_id": {
+                                                "type": "integer",
+                                                "format": "int64",
+                                                "example": 3
+                                            },
+                                            "user_id": {
+                                                "type": "integer",
+                                                "format": "int64",
+                                                "example": null,
+                                                "nullable": true
+                                            },
+                                            "is_used": {
+                                                "type": "boolean",
+                                                "example": false
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-04-23T15:47:55.000000Z"
+                                            },
+                                            "updated_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-04-23T15:47:55.000000Z"
+                                            }
+                                        },
                                         "type": "object"
                                     }
                                 }
