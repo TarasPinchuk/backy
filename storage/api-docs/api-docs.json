@@ -574,27 +574,7 @@
                                     "properties": {
                                         "bonuses": {
                                             "type": "array",
-                                            "items": {
-                                                "allOf": [
-                                                    {
-                                                        "$ref": "#/components/schemas/BonusClaim"
-                                                    },
-                                                    {
-                                                        "properties": {
-                                                            "bonus": {
-                                                                "$ref": "#/components/schemas/Bonus"
-                                                            },
-                                                            "company": {
-                                                                "$ref": "#/components/schemas/Company"
-                                                            },
-                                                            "volunteerRecipient": {
-                                                                "$ref": "#/components/schemas/VolunteerRecipient"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    }
-                                                ]
-                                            }
+                                            "items": {}
                                         }
                                     },
                                     "type": "object"
@@ -626,9 +606,7 @@
                                     "properties": {
                                         "bonuses": {
                                             "type": "array",
-                                            "items": {
-                                                "$ref": "#/components/schemas/BonusClaim"
-                                            }
+                                            "items": {}
                                         }
                                     },
                                     "type": "object"

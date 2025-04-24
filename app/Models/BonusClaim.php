@@ -23,6 +23,10 @@ class BonusClaim extends Model
         'claimed_at',
     ];
 
+    protected $casts = [
+        'claimed_at' => 'datetime',
+    ];
+
     public function bonus()
     {
         return $this->belongsTo(Bonus::class);

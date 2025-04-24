@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BonusClaim;
 use App\Models\VolunteerRecipient;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use OpenApi\Annotations as OA;
 
@@ -22,51 +22,49 @@ class BonusClaimsController extends Controller
      *         description="История выдачи бонусов компанией",
      *         @OA\JsonContent(
      *             @OA\Property(
-     *                 property="bonuses",
-     *                 type="array",
+     *                 property="bonuses", type="array",
      *                 @OA\Items(
-     *                     allOf={
-     *                         @OA\Schema(ref="#/components/schemas/BonusClaim"),
-     *                         @OA\Schema(
-     *                             @OA\Property(property="bonus", ref="#/components/schemas/Bonus"),
-     *                             @OA\Property(property="company", ref="#/components/schemas/Company"),
-     *                             @OA\Property(property="volunteerRecipient", ref="#/components/schemas/VolunteerRecipient")
+     *                     @OA\Schema(
+     *                         @OA\Property(property="id",         type="integer", example=1),
+     *                         @OA\Property(property="name",       type="string",  example="Скидка 10%"),
+     *                         @OA\Property(property="level",      type="string",  example="max"),
+     *                         @OA\Property(property="claimed_at", type="string",  example="2025-04-23T20:47:55"),
+     *                         @OA\Property(
+     *                             property="volunteer", type="object",
+     *                             @OA\Property(property="id",           type="integer", example=15),
+     *                             @OA\Property(property="full_name",    type="string",  example="Иванов И. И."),
+     *                             @OA\Property(property="inn",          type="string",  example="772456789012"),
+     *                             @OA\Property(property="email",        type="string",  example="volunteer@example.com"),
+     *                             @OA\Property(property="access_level", type="string",  example="max")
      *                         )
-     *                     }
+     *                     )
      *                 )
      *             )
      *         )
      *     )
      * )
      */
-    public function companyHistory()
+    public function companyHistory(): JsonResponse
     {
         $companyId = Auth::guard('company')->id();
 
-        $history = BonusClaim::with(['bonus', 'volunteerRecipient'])
-            ->whereHas('bonus', function ($q) use ($companyId) {
-                $q->where('company_id', $companyId);
-            })
-            ->orderByDesc('claimed_at')
+        $claims = BonusClaim::with(['bonus', 'volunteerRecipient'])
+            ->whereHas('bonus', fn($q) => $q->where('company_id', $companyId))
             ->get();
 
-        // Преобразуем к тому виду, который ждёт фронтенд
-        $bonuses = $history->map(function (BonusClaim $claim) {
-            $vol = $claim->volunteerRecipient;
-            return [
-                'id'         => $claim->bonus->id,
-                'name'       => $claim->bonus->name,
-                'level'      => $claim->bonus->level,
-                'claimed_at' => $claim->claimed_at,
-                'volunteer'  => [
-                    'id'           => $vol->id,
-                    'full_name'    => $vol->full_name,
-                    'inn'          => $vol->inn,
-                    'email'        => $vol->email,
-                    'access_level' => $vol->access_level,
-                ],
-            ];
-        });
+        $bonuses = $claims->map(fn($claim) => [
+            'id'         => $claim->bonus->id,
+            'name'       => $claim->bonus->name,
+            'level'      => $claim->bonus->level,
+            'claimed_at' => $claim->claimed_at->toDateTimeString(),
+            'volunteer'  => [
+                'id'           => $claim->volunteerRecipient->id,
+                'full_name'    => $claim->volunteerRecipient->full_name,
+                'inn'          => $claim->volunteerRecipient->inn,
+                'email'        => $claim->volunteerRecipient->email,
+                'access_level' => $claim->volunteerRecipient->access_level,
+            ],
+        ]);
 
         return response()->json(['bonuses' => $bonuses], 200);
     }
@@ -83,29 +81,55 @@ class BonusClaimsController extends Controller
      *         description="История получения бонусов пользователем",
      *         @OA\JsonContent(
      *             @OA\Property(
-     *                 property="bonuses",
-     *                 type="array",
-     *                 @OA\Items(ref="#/components/schemas/BonusClaim")
+     *                 property="bonuses", type="array",
+     *                 @OA\Items(
+     *                     @OA\Schema(
+     *                         @OA\Property(property="id",         type="integer", example=1),
+     *                         @OA\Property(property="name",       type="string",  example="Скидка 10%"),
+     *                         @OA\Property(property="level",      type="string",  example="max"),
+     *                         @OA\Property(property="claimed_at", type="string",  example="2025-04-23T20:47:55"),
+     *                         @OA\Property(
+     *                             property="volunteer", type="object",
+     *                             @OA\Property(property="id",           type="integer", example=15),
+     *                             @OA\Property(property="full_name",    type="string",  example="Иванов И. И."),
+     *                             @OA\Property(property="inn",          type="string",  example="772456789012"),
+     *                             @OA\Property(property="email",        type="string",  example="volunteer@example.com"),
+     *                             @OA\Property(property="access_level", type="string",  example="max")
+     *                         )
+     *                     )
+     *                 )
      *             )
      *         )
      *     )
      * )
      */
-    public function userHistory()
+    public function userHistory(): JsonResponse
     {
-        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         $volunteer = VolunteerRecipient::where('user_id', $user->id)->first();
-
         if (! $volunteer) {
             return response()->json(['bonuses' => []], 200);
         }
 
-        $history = BonusClaim::with('bonus')
+        $claims = BonusClaim::with(['bonus', 'volunteerRecipient'])
             ->where('volunteer_recipient_id', $volunteer->id)
             ->get();
 
-        return response()->json(['bonuses' => $history], 200);
+        $bonuses = $claims->map(fn($claim) => [
+            'id'         => $claim->bonus->id,
+            'name'       => $claim->bonus->name,
+            'level'      => $claim->bonus->level,
+            'claimed_at' => $claim->claimed_at->toDateTimeString(),
+            'volunteer'  => [
+                'id'           => $claim->volunteerRecipient->id,
+                'full_name'    => $claim->volunteerRecipient->full_name,
+                'inn'          => $claim->volunteerRecipient->inn,
+                'email'        => $claim->volunteerRecipient->email,
+                'access_level' => $claim->volunteerRecipient->access_level,
+            ],
+        ]);
+
+        return response()->json(['bonuses' => $bonuses], 200);
     }
 }
