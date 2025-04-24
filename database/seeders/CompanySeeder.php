@@ -3,13 +3,15 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 use App\Models\Company;
+use Illuminate\Support\Facades\Hash;
 
 class CompanySeeder extends Seeder
 {
     public function run()
     {
+        Company::truncate();
+
         Company::create([
             'name'     => 'Благотворительный Фонд «Помощь»',
             'email'    => 'help_fund@example.com',

@@ -68,6 +68,7 @@ class BonusController extends Controller
     public function companyBonuses()
     {
         $bonuses = Bonus::where('company_id', Auth::guard('company')->id())->get();
+
         return response()->json(['bonuses' => $bonuses], 200);
     }
 
@@ -87,11 +88,11 @@ class BonusController extends Controller
      *     )
      * )
      */
-    public function userBonuses()
+    public function index()
     {
         $user = Auth::user();
-
         $volunteer = VolunteerRecipient::where('user_id', $user->id)->first();
+
         if (! $volunteer) {
             return response()->json(['bonuses' => []], 200);
         }
@@ -125,13 +126,11 @@ class BonusController extends Controller
     {
         $user = Auth::user();
 
-        // Найдём запись волонтёра по email или ИНН
+        // Найдём волонтёра по user_id, email или ИНН
         $volunteer = VolunteerRecipient::where('user_id', $user->id)
             ->orWhere('email', $user->email)
-            ->orWhere(function($q) use ($user) {
-                if ($user->inn) {
-                    $q->where('inn', $user->inn);
-                }
+            ->when($user->inn, function($q) use ($user) {
+                $q->orWhere('inn', $user->inn);
             })
             ->first();
 
@@ -150,7 +149,7 @@ class BonusController extends Controller
      * @OA\Get(
      *     path="/api/user/bonuses/by-inn",
      *     operationId="getBonusesByInn",
-     *     summary="Активированные бонусы по введённому ИНН",
+     *     summary="Доступные бонусы по введённому ИНН",
      *     tags={"Bonus"},
      *     security={{"sanctum":{}}},
      *     @OA\Parameter(
@@ -207,7 +206,8 @@ class BonusController extends Controller
      */
     public function allBonuses()
     {
-        if (! Auth::user() || ! Auth::user()->is_admin) {
+        $user = Auth::user();
+        if (! $user || ! $user->is_admin) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
@@ -217,7 +217,7 @@ class BonusController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/bonuses/{bonus}/claim",
+     *     path="/api/user/bonuses/{bonus}/claim",
      *     operationId="claimBonus",
      *     summary="Взять бонус",
      *     tags={"Bonus"},
@@ -238,7 +238,6 @@ class BonusController extends Controller
     {
         $user = Auth::user();
 
-        // Найдём волонтёра по company, email или ИНН
         $volunteer = VolunteerRecipient::where('company_id', $bonus->company_id)
             ->where(function($q) use ($user) {
                 $q->where('email', $user->email);
@@ -259,7 +258,6 @@ class BonusController extends Controller
         if (is_null($volunteer->user_id)) {
             $volunteer->update(['user_id' => $user->id]);
         }
-
         $bonus->update(['is_used' => true]);
 
         $claim = BonusClaim::create([

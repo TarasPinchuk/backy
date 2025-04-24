@@ -14,7 +14,9 @@ class UserSeeder extends Seeder
 {
     public function run()
     {
-        // CSV-данные
+        User::truncate();
+        VolunteerRecipient::truncate();
+
         $csv = <<<CSV
 Иванов Иван Иванович,772456789012,+7 916 555 82 19,aleksandr.ivanov1985@yandex.ru,12.05.1988,Помощь в организации благотворительного забега
 Петров Петр Петрович,500123456789,+7 925 123 45 67,mariya.petrova2000@yandex.ru,28.02.2001,Сбор средств для местного приюта для животных
@@ -28,39 +30,37 @@ class UserSeeder extends Seeder
 Михайлов Николай Андреевич,789012345678,+7 980 890 12 34,tatiana.volkova86@yandex.ru,14.03.1958,Сбор одежды для нуждающихся
 CSV;
 
-        $lines = explode("\n", trim($csv));
+        $lines = preg_split('/\r\n|\r|\n/', trim($csv));
 
-        // Получаем ID компаний из CompanySeeder
-        $companyIds = Company::pluck('id')->toArray();
-        $companyCount = count($companyIds);
+        $companyIds    = Company::pluck('id')->toArray();
+        $companyCount  = count($companyIds);
 
         foreach ($lines as $index => $line) {
-            [$fullName, $inn, $phone, $email, $birthDate, $achievements] = array_map('trim', explode(',', $line));
+            if (trim($line) === '') {
+                continue;
+            }
 
-            // username — часть e-mail до @
-            $username = Str::before($email, '@');
+            $cols = str_getcsv($line, ',');
+            $cols = array_map('trim', $cols);
+            list($fullName, $inn, $phone, $email, $birthDate, $achievements) = $cols;
 
-            // confirmation_code: от 10000 до 10009
-            $confirmationCode = (string) (10000 + $index);
+            $confirmationCode = str_pad((string) random_int(10000, 99999), 5, '0', STR_PAD_LEFT);
 
-            // 1) Создаём пользователя
             $user = User::create([
-                'username'          => $username,
+                'username'          => Str::before($email, '@'),
                 'email'             => $email,
                 'password'          => Hash::make('password'),
                 'confirmation_code' => $confirmationCode,
             ]);
 
-            // 2) Создаём волонтёра и привязываем к пользователю
             VolunteerRecipient::create([
                 'company_id'   => $companyIds[$index % $companyCount],
                 'full_name'    => $fullName,
                 'inn'          => $inn,
-                'phone'        => $phone,
+                'phone'        => $phone ?: null,
                 'email'        => $email,
-                'birth_date'   => Carbon::createFromFormat('d.m.Y', $birthDate),
+                'birth_date'   => Carbon::createFromFormat('d.m.Y', $birthDate)->toDateString(),
                 'achievements' => $achievements,
-                // первые 5 — 'максимальный', остальные — 'минимальный'
                 'access_level' => $index < 5 ? 'максимальный' : 'минимальный',
                 'user_id'      => $user->id,
             ]);

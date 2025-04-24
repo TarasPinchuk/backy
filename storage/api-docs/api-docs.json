@@ -813,7 +813,7 @@
                 "tags": [
                     "Bonus"
                 ],
-                "summary": "Активированные бонусы по введённому ИНН",
+                "summary": "Доступные бонусы по введённому ИНН",
                 "operationId": "getBonusesByInn",
                 "parameters": [
                     {
@@ -890,7 +890,7 @@
                 ]
             }
         },
-        "/api/bonuses/{bonus}/claim": {
+        "/api/user/bonuses/{bonus}/claim": {
             "post": {
                 "tags": [
                     "Bonus"
