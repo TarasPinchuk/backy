@@ -23,7 +23,7 @@
                 "tags": [
                     "Admin"
                 ],
-                "summary": "Загрузка CSV со списком волонтёров (админ)",
+                "summary": "Загрузить CSV-файл со списком волонтёров для всех компаний",
                 "operationId": "827aece7ca6ac43d9e2a5484f45eb435",
                 "requestBody": {
                     "required": true,
@@ -32,6 +32,7 @@
                             "schema": {
                                 "properties": {
                                     "file": {
+                                        "description": "CSV: full_name,inn,phone,email,birth_date (d.m.Y),achievements",
                                         "type": "string",
                                         "format": "binary"
                                     }
@@ -43,7 +44,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "CSV обработан",
+                        "description": "Успешный импорт",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -54,15 +55,23 @@
                                         },
                                         "imported": {
                                             "type": "integer",
-                                            "example": 42
+                                            "example": 20
                                         }
                                     },
                                     "type": "object"
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Неверный файл"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/admin/bonuses": {

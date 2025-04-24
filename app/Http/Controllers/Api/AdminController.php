@@ -8,27 +8,40 @@ use App\Models\Company;
 use App\Models\VolunteerRecipient;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Carbon\Carbon;
+use OpenApi\Annotations as OA;
 
 class AdminController extends Controller
 {
     /**
      * @OA\Post(
      *     path="/api/admin/volunteers/upload",
-     *     summary="Загрузка CSV со списком волонтёров (админ)",
+     *     summary="Загрузить CSV-файл со списком волонтёров для всех компаний",
      *     tags={"Admin"},
+     *     security={{"sanctum":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\MediaType(
      *             mediaType="multipart/form-data",
      *             @OA\Schema(
-     *                 @OA\Property(property="file", type="string", format="binary")
+     *                 @OA\Property(
+     *                     property="file",
+     *                     type="string",
+     *                     format="binary",
+     *                     description="CSV: full_name,inn,phone,email,birth_date (d.m.Y),achievements"
+     *                 )
      *             )
      *         )
      *     ),
-     *     @OA\Response(response=200, description="CSV обработан", @OA\JsonContent(
-     *         @OA\Property(property="message", type="string", example="Volunteers uploaded successfully"),
-     *         @OA\Property(property="imported", type="integer", example=42)
-     *     ))
+     *     @OA\Response(
+     *         response=200,
+     *         description="Успешный импорт",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Volunteers uploaded successfully"),
+     *             @OA\Property(property="imported", type="integer", example=20)
+     *         )
+     *     ),
+     *     @OA\Response(response=400, description="Неверный файл")
      * )
      */
     public function uploadVolunteers(Request $request): JsonResponse
@@ -37,48 +50,56 @@ class AdminController extends Controller
             'file' => 'required|file|mimes:csv,txt'
         ]);
 
-        $file     = $request->file('file');
+        $path     = $request->file('file')->getRealPath();
+        $handle   = fopen($path, 'r');
+        $header   = fgetcsv($handle, 1000, ","); // Пропускаем заголовок
         $imported = 0;
 
-        if ($file->isValid() && ($handle = fopen($file->getRealPath(), 'r')) !== false) {
-            // Считаем заголовок и пропускаем
-            fgetcsv($handle, 1000, ',');
+        while ($row = fgetcsv($handle, 1000, ",")) {
+            // пропустить пустые строки
+            if (! array_filter($row)) {
+                continue;
+            }
+            // пропустить если колонок меньше шести
+            if (count($row) < 6) {
+                continue;
+            }
 
-            while (($row = fgetcsv($handle, 1000, ',')) !== false) {
-                // Ожидаем: [0]=full_name, [1]=email, [2]=inn, [3]=company_name
-                [$fullName, $email, $inn, $companyName] = array_pad($row, 4, null);
+            // безопасно распаковываем
+            [$fullName, $inn, $phone, $email, $birthDate, $achievements] = array_map('trim', $row);
 
-                if (! $fullName || ! $email || ! $inn || ! $companyName) {
-                    continue;
-                }
+            // приводим дату рождения
+            $bd = $birthDate
+                ? Carbon::createFromFormat('d.m.Y', $birthDate)->toDateString()
+                : null;
 
-                // **Только существующие компании!** Если нет — пропускаем
-                $company = Company::where('name', $companyName)->first();
-                if (! $company) {
-                    continue;
-                }
+            $volData = [
+                'full_name'    => $fullName,
+                'inn'          => $inn,
+                'phone'        => $phone ?: null,
+                'email'        => $email ?: null,
+                'birth_date'   => $bd,
+                'achievements' => $achievements ?: null,
+                'access_level' => 'минимальный',
+            ];
 
-                // Проверяем нет ли уже такого волонтёра в этой компании
+            // для каждой компании
+            foreach (Company::all() as $company) {
                 $exists = VolunteerRecipient::where('company_id', $company->id)
                     ->where(function($q) use ($email, $inn) {
                         $q->where('email', $email)
-                          ->orWhere('inn', $inn);
+                            ->orWhere('inn', $inn);
                     })
                     ->exists();
 
                 if (! $exists) {
-                    VolunteerRecipient::create([
-                        'company_id'   => $company->id,
-                        'full_name'    => $fullName,
-                        'email'        => $email,
-                        'inn'          => $inn,
-                        // остальные поля CSV (phone, birth_date, achievements, access_level) можно тоже добавить по потребности
-                    ]);
+                    VolunteerRecipient::create($volData + ['company_id' => $company->id]);
                     $imported++;
                 }
             }
-            fclose($handle);
         }
+
+        fclose($handle);
 
         return response()->json([
             'message'  => 'Volunteers uploaded successfully',
@@ -91,9 +112,13 @@ class AdminController extends Controller
      *     path="/api/admin/bonuses",
      *     summary="Все бонусы (админ)",
      *     tags={"Admin"},
-     *     @OA\Response(response=200, description="Список бонусов", @OA\JsonContent(
-     *         @OA\Property(property="bonuses", type="array", @OA\Items(ref="#/components/schemas/Bonus"))
-     *     ))
+     *     @OA\Response(
+     *         response=200,
+     *         description="Список бонусов",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="bonuses", type="array", @OA\Items(ref="#/components/schemas/Bonus"))
+     *         )
+     *     )
      * )
      */
     public function listBonuses(): JsonResponse
@@ -106,9 +131,13 @@ class AdminController extends Controller
      *     path="/api/admin/volunteers",
      *     summary="Все волонтёры (админ)",
      *     tags={"Admin"},
-     *     @OA\Response(response=200, description="Список волонтёров", @OA\JsonContent(
-     *         @OA\Property(property="volunteers", type="array", @OA\Items(ref="#/components/schemas/VolunteerRecipient"))
-     *     ))
+     *     @OA\Response(
+     *         response=200,
+     *         description="Список волонтёров",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="volunteers", type="array", @OA\Items(ref="#/components/schemas/VolunteerRecipient"))
+     *         )
+     *     )
      * )
      */
     public function listVolunteers(): JsonResponse
@@ -121,9 +150,13 @@ class AdminController extends Controller
      *     path="/api/admin/companies",
      *     summary="Все компании (админ)",
      *     tags={"Admin"},
-     *     @OA\Response(response=200, description="Список компаний", @OA\JsonContent(
-     *         @OA\Property(property="companies", type="array", @OA\Items(ref="#/components/schemas/Company"))
-     *     ))
+     *     @OA\Response(
+     *         response=200,
+     *         description="Список компаний",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="companies", type="array", @OA\Items(ref="#/components/schemas/Company"))
+     *         )
+     *     )
      * )
      */
     public function listCompanies(): JsonResponse

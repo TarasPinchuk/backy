@@ -43,14 +43,32 @@ class BonusClaimsController extends Controller
     {
         $companyId = Auth::guard('company')->id();
 
-        $history = BonusClaim::with(['bonus.company', 'volunteerRecipient'])
+        $history = BonusClaim::with(['bonus', 'volunteerRecipient'])
             ->whereHas('bonus', function ($q) use ($companyId) {
                 $q->where('company_id', $companyId);
             })
+            ->orderByDesc('claimed_at')
             ->get();
 
-        // Отдаём как { "bonuses": [ ... ] }
-        return response()->json(['bonuses' => $history], 200);
+        // Преобразуем к тому виду, который ждёт фронтенд
+        $bonuses = $history->map(function (BonusClaim $claim) {
+            $vol = $claim->volunteerRecipient;
+            return [
+                'id'         => $claim->bonus->id,
+                'name'       => $claim->bonus->name,
+                'level'      => $claim->bonus->level,
+                'claimed_at' => $claim->claimed_at,
+                'volunteer'  => [
+                    'id'           => $vol->id,
+                    'full_name'    => $vol->full_name,
+                    'inn'          => $vol->inn,
+                    'email'        => $vol->email,
+                    'access_level' => $vol->access_level,
+                ],
+            ];
+        });
+
+        return response()->json(['bonuses' => $bonuses], 200);
     }
 
     /**
