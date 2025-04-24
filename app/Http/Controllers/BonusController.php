@@ -60,11 +60,7 @@ class BonusController extends Controller
      *         response=200,
      *         description="Список бонусов компании",
      *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="bonuses",
-     *                 type="array",
-     *                 @OA\Items(ref="#/components/schemas/Bonus")
-     *             )
+     *             @OA\Property(property="bonuses", type="array", @OA\Items(ref="#/components/schemas/Bonus"))
      *         )
      *     )
      * )
@@ -79,18 +75,14 @@ class BonusController extends Controller
      * @OA\Get(
      *     path="/api/user/bonuses",
      *     operationId="getUserBonuses",
-     *     summary="Бонусы текущего пользователя",
+     *     summary="Все активированные бонусы пользователя (по убыванию времени активации)",
      *     tags={"Bonus"},
      *     security={{"sanctum":{}}},
      *     @OA\Response(
      *         response=200,
      *         description="Список бонусов пользователя",
      *         @OA\JsonContent(
-     *             @OA\Property(
-     *                 property="bonuses",
-     *                 type="array",
-     *                 @OA\Items(ref="#/components/schemas/Bonus")
-     *             )
+     *             @OA\Property(property="bonuses", type="array", @OA\Items(ref="#/components/schemas/Bonus"))
      *         )
      *     )
      * )
@@ -106,6 +98,90 @@ class BonusController extends Controller
 
         $bonuses = BonusClaim::with('bonus')
             ->where('volunteer_recipient_id', $volunteer->id)
+            ->orderBy('claimed_at', 'desc')
+            ->get()
+            ->pluck('bonus');
+
+        return response()->json(['bonuses' => $bonuses], 200);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/user/bonuses/available",
+     *     operationId="getAvailableBonuses",
+     *     summary="Доступные бонусы для текущего пользователя",
+     *     tags={"Bonus"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Список доступных бонусов",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="bonuses", type="array", @OA\Items(ref="#/components/schemas/Bonus"))
+     *         )
+     *     )
+     * )
+     */
+    public function available()
+    {
+        $user = Auth::user();
+
+        // Найдём запись волонтёра по email или ИНН
+        $volunteer = VolunteerRecipient::where('user_id', $user->id)
+            ->orWhere('email', $user->email)
+            ->orWhere(function($q) use ($user) {
+                if ($user->inn) {
+                    $q->where('inn', $user->inn);
+                }
+            })
+            ->first();
+
+        if (! $volunteer) {
+            return response()->json(['bonuses' => []], 200);
+        }
+
+        $bonuses = Bonus::where('company_id', $volunteer->company_id)
+            ->where('is_used', false)
+            ->get();
+
+        return response()->json(['bonuses' => $bonuses], 200);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/user/bonuses/by-inn",
+     *     operationId="getBonusesByInn",
+     *     summary="Активированные бонусы по введённому ИНН",
+     *     tags={"Bonus"},
+     *     security={{"sanctum":{}}},
+     *     @OA\Parameter(
+     *         name="inn",
+     *         in="query",
+     *         required=true,
+     *         @OA\Schema(type="string", example="772456789012")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Список бонусов пользователя по ИНН",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="bonuses", type="array", @OA\Items(ref="#/components/schemas/Bonus"))
+     *         )
+     *     )
+     * )
+     */
+    public function byInn(Request $request)
+    {
+        $data = $request->validate([
+            'inn' => 'required|string',
+        ]);
+
+        $volunteer = VolunteerRecipient::where('inn', $data['inn'])->first();
+        if (! $volunteer) {
+            return response()->json(['bonuses' => []], 200);
+        }
+
+        $bonuses = BonusClaim::with('bonus')
+            ->where('volunteer_recipient_id', $volunteer->id)
+            ->orderBy('claimed_at', 'desc')
             ->get()
             ->pluck('bonus');
 
@@ -119,7 +195,13 @@ class BonusController extends Controller
      *     summary="Список всех бонусов (только для админов)",
      *     tags={"Bonus"},
      *     security={{"sanctum":{}}},
-     *     @OA\Response(response=200, description="Все бонусы", @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Bonus"))),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Все бонусы",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="bonuses", type="array", @OA\Items(ref="#/components/schemas/Bonus"))
+     *         )
+     *     ),
      *     @OA\Response(response=403, description="Запрещено")
      * )
      */
@@ -128,7 +210,9 @@ class BonusController extends Controller
         if (! Auth::user() || ! Auth::user()->is_admin) {
             return response()->json(['message' => 'Forbidden'], 403);
         }
-        return response()->json(Bonus::all(), 200);
+
+        $bonuses = Bonus::all();
+        return response()->json(['bonuses' => $bonuses], 200);
     }
 
     /**
@@ -138,7 +222,12 @@ class BonusController extends Controller
      *     summary="Взять бонус",
      *     tags={"Bonus"},
      *     security={{"sanctum":{}}},
-     *     @OA\Parameter(name="bonus", in="path", required=true, @OA\Schema(type="integer", example=5)),
+     *     @OA\Parameter(
+     *         name="bonus",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=5)
+     *     ),
      *     @OA\Response(response=201, description="Бонус взят", @OA\JsonContent(ref="#/components/schemas/BonusClaim")),
      *     @OA\Response(response=400, description="Бонус уже был использован"),
      *     @OA\Response(response=403, description="Нет прав на этот бонус"),
@@ -149,6 +238,7 @@ class BonusController extends Controller
     {
         $user = Auth::user();
 
+        // Найдём волонтёра по company, email или ИНН
         $volunteer = VolunteerRecipient::where('company_id', $bonus->company_id)
             ->where(function($q) use ($user) {
                 $q->where('email', $user->email);

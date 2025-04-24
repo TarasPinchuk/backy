@@ -18,6 +18,140 @@
         }
     ],
     "paths": {
+        "/api/admin/volunteers/upload": {
+            "post": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Загрузка CSV-файла со списком волонтёров для всех компаний",
+                "operationId": "827aece7ca6ac43d9e2a5484f45eb435",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Волонтёры успешно загружены",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Volunteers uploaded successfully"
+                                        },
+                                        "imported": {
+                                            "type": "integer",
+                                            "example": 42
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/bonuses": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Список всех бонусов",
+                "operationId": "ceccf1c1eb4eba4dc80793a1b6ec34ba",
+                "responses": {
+                    "200": {
+                        "description": "Все бонусы",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "bonuses": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Bonus"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/volunteers": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Список всех волонтёров",
+                "operationId": "d65013820a31e2976669159785083e1c",
+                "responses": {
+                    "200": {
+                        "description": "Все волонтёры",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "volunteers": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/VolunteerRecipient"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/admin/companies": {
+            "get": {
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Список всех компаний",
+                "operationId": "b0b3e3967b0974182d01d706719a6853",
+                "responses": {
+                    "200": {
+                        "description": "Все компании",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "companies": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Company"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/user": {
             "get": {
                 "tags": [
@@ -602,11 +736,90 @@
                 "tags": [
                     "Bonus"
                 ],
-                "summary": "Бонусы текущего пользователя",
+                "summary": "Все активированные бонусы пользователя (по убыванию времени активации)",
                 "operationId": "getUserBonuses",
                 "responses": {
                     "200": {
                         "description": "Список бонусов пользователя",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "bonuses": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Bonus"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/bonuses/available": {
+            "get": {
+                "tags": [
+                    "Bonus"
+                ],
+                "summary": "Доступные бонусы для текущего пользователя",
+                "operationId": "getAvailableBonuses",
+                "responses": {
+                    "200": {
+                        "description": "Список доступных бонусов",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "bonuses": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Bonus"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/user/bonuses/by-inn": {
+            "get": {
+                "tags": [
+                    "Bonus"
+                ],
+                "summary": "Активированные бонусы по введённому ИНН",
+                "operationId": "getBonusesByInn",
+                "parameters": [
+                    {
+                        "name": "inn",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "772456789012"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список бонусов пользователя по ИНН",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -644,10 +857,15 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Bonus"
-                                    }
+                                    "properties": {
+                                        "bonuses": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Bonus"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
@@ -972,6 +1190,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Admin",
+            "description": "Admin"
+        },
         {
             "name": "User",
             "description": "User"

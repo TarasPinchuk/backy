@@ -4,31 +4,39 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\CompanyAuthController;
+use App\Http\Controllers\Api\BonusController;
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\CompaniesController;
-use App\Http\Controllers\BonusController;
 use App\Http\Controllers\BonusClaimsController;
 
 /*
 |--------------------------------------------------------------------------
-| Волонтёры
+| Волонтёры (пользовательские маршруты)
 |--------------------------------------------------------------------------
 */
 Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::post('/login',    [AuthenticatedSessionController::class, 'store']);
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
-    Route::get('/user',     [UserController::class, 'profile']);
+Route::middleware('auth:sanctum')->prefix('user')->group(function () {
+    // Профиль
+    Route::get('profile',              [UserController::class, 'profile']);
+    Route::post('logout',              [AuthenticatedSessionController::class, 'destroy']);
 
-    // бонусы текущего пользователя
-    Route::get('/user/bonuses',         [BonusController::class, 'userBonuses']);
-    // доступные бонусы
-    Route::get('/bonuses/available',    [BonusController::class, 'available']);
-    // взять бонус
-    Route::post('/bonuses/{bonus}/claim', [BonusController::class, 'claim']);
-    // история полученных бонусов (волонтёр)
-    Route::get('/bonuses/history',      [BonusClaimsController::class, 'userHistory']);
+    // Все активированные бонусы пользователя, сортировка по времени убыванию
+    Route::get('bonuses',              [BonusController::class, 'index']);
+
+    // Доступные для активации бонусы (по email или ИНН)
+    Route::get('bonuses/available',    [BonusController::class, 'available']);
+
+    // Доступные бонусы по введённому ИНН
+    Route::get('bonuses/by-inn',       [BonusController::class, 'byInn']);
+
+    // Взять бонус
+    Route::post('bonuses/{bonus}/claim', [BonusController::class, 'claim']);
+
+    // История полученных бонусов (волонтёр)
+    Route::get('bonuses/history',      [BonusClaimsController::class, 'userHistory']);
 });
 
 /*
@@ -37,24 +45,45 @@ Route::middleware('auth:sanctum')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('company')->group(function () {
-    // регистрация/логин без токена
-    Route::post('/register', [CompanyAuthController::class, 'register']);
-    Route::post('/login',    [CompanyAuthController::class, 'login']);
+    // Регистрация/вход (без токена)
+    Route::post('register',            [CompanyAuthController::class, 'register']);
+    Route::post('login',               [CompanyAuthController::class, 'login']);
 
-    // всё остальное — только для аутентифицированных компаний
+    // Всё остальное — для аутентифицированных компаний
     Route::middleware('auth:sanctum')->group(function () {
-        // профиль компании
-        Route::get('/me', [CompanyAuthController::class, 'me']);
+        // Профиль компании
+        Route::get('me',               [CompanyAuthController::class, 'me']);
 
-        // волонтёры
-        Route::get('/volunteers',         [CompaniesController::class, 'volunteers']);
-        Route::post('/volunteers/upload', [CompaniesController::class, 'uploadVolunteers']);
+        // Волонтёры своей компании
+        Route::get('volunteers',       [CompaniesController::class, 'volunteers']);
+        Route::post('volunteers/upload',[CompaniesController::class, 'uploadVolunteers']);
 
-        // создание бонуса
-        Route::post('/bonuses',          [BonusController::class, 'create']);
-        // список бонусов текущей компании
-        Route::get('/bonuses',           [BonusController::class, 'companyBonuses']);
-        // история выдачи бонусов компанией
-        Route::get('/bonuses/history',   [BonusClaimsController::class, 'companyHistory']);
+        // Создание бонуса
+        Route::post('bonuses',         [BonusController::class, 'create']);
+
+        // Список бонусов текущей компании
+        Route::get('bonuses',          [BonusController::class, 'companyBonuses']);
+
+        // История выдачи бонусов компанией
+        Route::get('bonuses/history',  [BonusClaimsController::class, 'companyHistory']);
     });
+});
+
+/*
+|--------------------------------------------------------------------------
+| Админка (без авторизации, по токену admin)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin')->group(function () {
+    // Загрузка CSV волонтёров для всех компаний
+    Route::post('volunteers/upload',  [AdminController::class, 'uploadVolunteers']);
+
+    // Список всех бонусов
+    Route::get('bonuses',             [AdminController::class, 'listBonuses']);
+
+    // Список всех волонтёров
+    Route::get('volunteers',          [AdminController::class, 'listVolunteers']);
+
+    // Список всех компаний
+    Route::get('companies',           [AdminController::class, 'listCompanies']);
 });
