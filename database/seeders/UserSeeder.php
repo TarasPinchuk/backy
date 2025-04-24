@@ -17,6 +17,13 @@ class UserSeeder extends Seeder
         User::truncate();
         VolunteerRecipient::truncate();
 
+        User::create([
+            'username'          => 'admin',
+            'email'             => 'admin@example.com',
+            'password'          => Hash::make('root'),
+            'confirmation_code' => '00000',
+        ]);
+
         $csv = <<<CSV
 Иванов Иван Иванович,772456789012,+7 916 555 82 19,aleksandr.ivanov1985@yandex.ru,12.05.1988,Помощь в организации благотворительного забега
 Петров Петр Петрович,500123456789,+7 925 123 45 67,mariya.petrova2000@yandex.ru,28.02.2001,Сбор средств для местного приюта для животных
@@ -32,11 +39,11 @@ CSV;
 
         $lines = preg_split('/\r\n|\r|\n/', trim($csv));
 
-        $companyIds    = Company::pluck('id')->toArray();
-        $companyCount  = count($companyIds);
+        $companyIds   = Company::pluck('id')->toArray();
+        $companyCount = count($companyIds);
 
         foreach ($lines as $index => $line) {
-            if (trim($line) === '') {
+            if (! trim($line)) {
                 continue;
             }
 
@@ -44,7 +51,7 @@ CSV;
             $cols = array_map('trim', $cols);
             list($fullName, $inn, $phone, $email, $birthDate, $achievements) = $cols;
 
-            $confirmationCode = str_pad((string) random_int(10000, 99999), 5, '0', STR_PAD_LEFT);
+            $confirmationCode = (string)random_int(10000, 99999);
 
             $user = User::create([
                 'username'          => Str::before($email, '@'),
