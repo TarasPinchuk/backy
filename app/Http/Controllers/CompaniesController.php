@@ -96,7 +96,8 @@ class CompaniesController extends Controller
     public function volunteers()
     {
         $companyId = Auth::guard('company')->id();
-        $vols = VolunteerRecipient::with('claims.bonus')
+
+        $vols = VolunteerRecipient::with(['claims.bonus', 'user'])
             ->where('company_id', $companyId)
             ->get();
 

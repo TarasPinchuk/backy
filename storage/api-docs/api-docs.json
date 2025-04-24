@@ -1161,7 +1161,8 @@
                     "full_name",
                     "inn",
                     "email",
-                    "access_level"
+                    "access_level",
+                    "confirmation_code"
                 ],
                 "properties": {
                     "id": {
@@ -1184,6 +1185,10 @@
                     "access_level": {
                         "type": "string",
                         "example": "max"
+                    },
+                    "confirmation_code": {
+                        "type": "string",
+                        "example": "12345"
                     }
                 },
                 "type": "object"
